@@ -1,3 +1,5 @@
+# Imports
+### Importing the required libraries and our NSW code file.
 ```python
 import numpy as np
 from sklearn.metrics import accuracy_score
