@@ -1,8 +1,9 @@
+import math
+from collections import Counter
+
 import numpy as np
 from sortedcollections import ValueSortedDict
-from collections import Counter
 from tqdm import tqdm
-import math
 from tslearn.metrics import dtw
 
 
@@ -18,6 +19,12 @@ class Node:
         self.label = label
         self.neighbors = ValueSortedDict()
 
+    def __repr__(self):
+        return {'index': self.index, 'label': self.label}
+
+    def __str__(self):
+        return 'Node(index=' + str(self.index) + ', Label=' + str(self.label) + ')'
+
     def connect(self, index, cost, f):
         """
         Calculate distance and store in a sorteddict
@@ -29,7 +36,7 @@ class Node:
         return self
 
 
-class nsw:
+class NSW:
     def __init__(self,
                  f: int = 1,
                  m: int = 1,
@@ -42,7 +49,7 @@ class nsw:
         self.f = f
         self.m = m
         self.k = k
-        self.euclidean = metric
+        self.metric = metric
         self.metric_params = metric_params
         self.corpus = {}
 
@@ -75,7 +82,7 @@ class nsw:
             self.corpus[node.index] = node
             return self
 
-        neighbors, count = self.knn_search(node, self.f)
+        neighbors, _ = self.knn_search(node, self.f)
 
         for key, cost in list(neighbors.items())[:self.f]:
             # have the store the updated node back in the corpus
@@ -108,10 +115,7 @@ class nsw:
         k_dist = self.result[list(self.result.keys())[k - 1]]
         c_dist = list(c.values())[0]
 
-        if c_dist > k_dist:
-            return True
-        else:
-            return False
+        return bool(c_dist > k_dist)
 
     def knn_search(self, q=None, k=1):
 
@@ -145,22 +149,21 @@ class nsw:
                 if len(self.result) >= k:
                     if self.check_stop_condition(c, k):
                         break
+                tempres.update(c)
 
                 # add neighbors of c if not in visitedset
-                cand = self.corpus[list(c.keys())[0]]
-                if (not cand.neighbors) or (cand.index in self.visitedset):
-                    break
-                else:
-                    for key in list(cand.neighbors.keys()):
-                        if key not in self.visitedset:
-                            if self.dmat is None:
-                                cost = self.switch_metric(self.q.values, v_ep.values)
-                            else:
-                                cost = self.dmat[q.index][v_ep.index]
-                            count += 1
-                            self.visitedset.add(key)
-                            self.candidates[key] = cost
-                            tempres[key] = cost
+                c = self.corpus[list(c.keys())[0]]
+
+                for key in list(c.neighbors.keys()):
+                    if key not in self.visitedset:
+                        if self.dmat is None:
+                            cost = self.switch_metric(self.q.values, v_ep.values)
+                        else:
+                            cost = self.dmat[q.index][v_ep.index]
+                        count += 1
+                        self.visitedset.add(key)
+                        self.candidates[key] = cost
+                        tempres[key] = cost
 
             # add tempres to result
             self.result.update(tempres)
@@ -213,10 +216,9 @@ class nsw:
         for i in tqdm(range(len(self.X_test))):
             q_node = Node(0, self.X_test[i], None)
 
-            neighbors, count = self.knn_search(q_node, self.k)
+            neighbors, _ = self.knn_search(q_node, self.k)
 
-            labels = [self.corpus[key].label for key in
-                      list(neighbors.keys())[:self.k]]
+            labels = [self.corpus[key].label for key in list(neighbors.keys())[:self.k]]
 
             label = most_frequent(labels)
 
@@ -241,6 +243,4 @@ class nsw:
             all_nns.append(neighbors)
         if return_prediction:
             return all_nns, preds, counts
-        else:
-            return all_nns
-
+        return all_nns
