@@ -8,14 +8,14 @@ from sklearn.model_selection import train_test_split,GridSearchCV
 ```
 
 # Load Data
-## Loading data and splitting it into train and test sets.
+### Loading data and splitting it into train and test sets.
 ```python
 data = np.load("data/plarge300.npy",allow_pickle=True).item()
 X_train, X_test, y_train, y_test = train_test_split(data["X"],data["y"], test_size=0.5, random_state=1992)
 ```
 
 # Parameter Search
-## We would be using GridSearchCV from sklearn to find the best set of parameters for the model on the train set.
+### We would be using GridSearchCV from sklearn to find the best set of parameters for the model on the train set.
 ```python
 #Creating the parameter space
 param_dict = {
@@ -60,7 +60,7 @@ print("Best Accuracy: ", best_score)
 
 
 # Model Evaluation
-## Supply the best set of parameters to the NSW model: train with Train set, and test on held-out test set.
+### Supply the best set of parameters to the NSW model: train with Train set, and test on held-out Test set.
 ```python
 nsw = NSW(**best_param)
 nsw.fit(X_train, y_train)
